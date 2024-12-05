@@ -29,8 +29,8 @@ func sortAndReport(col []int, output chan int) {
 }
 
 func main() {
-	column_a := []int{}
-	column_b := []int{}
+	columnA := []int{}
+	columnB := []int{}
 	diffs := int(0)
 
 	re := regexp.MustCompile("^(\\d+)\\s+(\\d+)$")
@@ -57,20 +57,20 @@ func main() {
 			slog.Error("error finding Range numbers", "error", err)
 		}
 
-		column_a = append(column_a, a)
-		column_b = append(column_b, b)
+		columnA = append(columnA, a)
+		columnB = append(columnB, b)
 	}
 
-	chan_a := make(chan int)
-	chan_b := make(chan int)
+	chanA := make(chan int)
+	chanB := make(chan int)
 
 	// ugly, but it works: sort both columns
-	go sortAndReport(column_a, chan_a)
-	go sortAndReport(column_b, chan_b)
+	go sortAndReport(columnA, chanA)
+	go sortAndReport(columnB, chanB)
 
 	// loop over the sorted channels, comparing each pair as it arrives
-	for a := range chan_a {
-		b := <-chan_b
+	for a := range chanA {
+		b := <-chanB
 		slog.Info("comparing A to B", "A", a, "B", b)
 		diffs += diff(a, b)
 	}

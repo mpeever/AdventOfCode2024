@@ -6,32 +6,14 @@ import (
 	"log/slog"
 	"os"
 	"regexp"
-	"slices"
 	"strconv"
 )
 
-func diff(a, b int) int {
-	if a > b {
-		return a - b
-	}
-	return b - a
-}
-
-func sortAndReport(col []int, output chan int) {
-	defer func() {
-		slog.Info("closing channel A")
-		close(output)
-	}()
-	slices.Sort(col)
-	for _, i := range col {
-		output <- i
-	}
-}
-
 func main() {
-	column_a := []int{}
-	column_b := []int{}
-	diffs := int(0)
+	numbers := []int{}
+	frequencies := make(map[int]int)
+
+	similarityScore := int(0)
 
 	re := regexp.MustCompile("^(\\d+)\\s+(\\d+)$")
 
@@ -50,30 +32,31 @@ func main() {
 
 		a, err := strconv.Atoi(nums[0][1])
 		if err != nil {
-			slog.Error("error finding Range numbers", "error", err)
+			slog.Error("error finding column A numbers", "error", err)
 		}
+		numbers = append(numbers, a)
+
 		b, err := strconv.Atoi(nums[0][2])
 		if err != nil {
-			slog.Error("error finding Range numbers", "error", err)
+			slog.Error("error finding column B numbers", "error", err)
 		}
 
-		column_a = append(column_a, a)
-		column_b = append(column_b, b)
+		_, found := frequencies[b]
+		if !found {
+			frequencies[b] = 0
+		}
+		frequencies[b] += 1
 	}
 
-	chan_a := make(chan int)
-	chan_b := make(chan int)
+	for _, num := range numbers {
+		freq, found := frequencies[num]
+		if !found {
+			freq = 0
+		}
 
-	// ugly, but it works: sort both columns
-	go sortAndReport(column_a, chan_a)
-	go sortAndReport(column_b, chan_b)
-
-	// loop over the sorted channels, comparing each pair as it arrives
-	for a := range chan_a {
-		b := <-chan_b
-		slog.Info("comparing A to B", "A", a, "B", b)
-		diffs += diff(a, b)
+		score := num * freq
+		similarityScore += score
 	}
 
-	fmt.Println("Found diffs:", diffs)
+	fmt.Println("Found similarityScore:", similarityScore)
 }
