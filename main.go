@@ -17,7 +17,7 @@ func diff(a, b int) int {
 	return b - a
 }
 
-func sort_and_report(col []int, output chan int) {
+func sortAndReport(col []int, output chan int) {
 	defer func() {
 		slog.Info("closing channel A")
 		close(output)
@@ -65,8 +65,8 @@ func main() {
 	chan_b := make(chan int)
 
 	// ugly, but it works: sort both columns
-	go sort_and_report(column_a, chan_a)
-	go sort_and_report(column_b, chan_b)
+	go sortAndReport(column_a, chan_a)
+	go sortAndReport(column_b, chan_b)
 
 	// loop over the sorted channels, comparing each pair as it arrives
 	for a := range chan_a {
