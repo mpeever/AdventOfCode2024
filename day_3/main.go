@@ -48,8 +48,8 @@ func puzzle2(input []string) int {
 
 	// for fields[1:], we only keep what comes after "do()"
 	for _, field := range fields[1:] {
-		slog.Info("checking out field", "field", field)
-		// we could have multiple "do()" in our line, but we can't have "don't()"
+		slog.Debug("checking out field", "field", field)
+		// we could have multiple "do()" in our field, but we can't have "don't()"
 		subfields := strings.Split(field, "do()")
 
 		// so we reject subfields[0] and keep subfields[1:]
