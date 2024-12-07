@@ -1,6 +1,7 @@
 package main
 
 import (
+	. "AdventOfCode2024/lib"
 	"bufio"
 	"log/slog"
 	"os"
@@ -11,36 +12,6 @@ import (
 type Level int
 type Step int
 type Report []Level
-
-// check if fn evaluates to true for all elements of a list.
-// why doesn't Go come standard with decent list operators
-func all(input []Step, fn func(Step) bool) bool {
-	if len(input) == 0 {
-		return true
-	}
-	car := input[0]
-	cdr := input[1:]
-
-	if !fn(car) {
-		return false
-	}
-
-	return all(cdr, fn)
-}
-
-// Again, this should be done as part of stdlib
-func any(reports []Report, fn func(r Report) bool) bool {
-	if len(reports) == 0 {
-		return false
-	}
-	car := reports[0]
-	cdr := reports[1:]
-	if fn(car) {
-		return true
-	}
-
-	return any(cdr, fn)
-}
 
 // Delta is always b - a
 func delta(a, b Level) Step {
@@ -69,11 +40,11 @@ func isSafe(input Report, size int) (bool, []Step) {
 	acc := deltas(input, []Step{})
 
 	// first, we check that ALL of the deltas are either above or below zero
-	if !(all(acc, func(i Step) bool { return i > 0 }) || all(acc, func(i Step) bool { return i < 0 })) {
+	if !(All(acc, func(i Step) bool { return i > 0 }) || All(acc, func(i Step) bool { return i < 0 })) {
 		return false, acc
 	}
 
-	// OK, so all our deltas are in the same direction, now we need to find if any exceed the size limit
+	// OK, so All our deltas are in the same direction, now we need to find if Any exceed the size limit
 	for _, d := range acc {
 		if d > Step(size) || d < Step(0-size) {
 			return false, acc
@@ -166,7 +137,7 @@ func puzzle2(input []string) (safeCount int, err error) {
 		slog.Debug("report to perforate", "report", report)
 
 		subreports := perforate(report)
-		if any(subreports, func(r Report) bool { s, _ := isSafe(r, 3); return s }) {
+		if Any(subreports, func(r Report) bool { s, _ := isSafe(r, 3); return s }) {
 			safeCount++
 		}
 	}
