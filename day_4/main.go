@@ -3,6 +3,7 @@ package main
 import (
 	. "AdventOfCode2024/lib"
 	"bufio"
+	"flag"
 	"log/slog"
 	"os"
 	"strings"
@@ -80,9 +81,12 @@ func puzzle2(grid CharacterGrid, word string) (xMasCount int) {
 
 // word search, ugh
 func main() {
-	if Any(os.Args, func(s string) bool { return strings.EqualFold(s, "debug") }) {
+	flag.BoolFunc("debug", "enable debug logging", func(s string) (err error) {
 		slog.SetLogLoggerLevel(slog.Level(slog.LevelDebug))
-	}
+		return
+	})
+
+	flag.Parse()
 
 	stdioScanner := bufio.NewScanner(os.Stdin)
 	lines := [][]string{}
