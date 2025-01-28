@@ -68,3 +68,22 @@ func TestRemoveIfNot(T *testing.T) {
 		}
 	}
 }
+
+func TestUnique_WithInt64(t *testing.T) {
+	input := []int64{1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4}
+	expected := []int64{1, 2, 3, 4}
+	actual := Unique(input)
+	if len(actual) != len(expected) {
+		t.Fail()
+	}
+}
+
+func TestUnique_WithString(t *testing.T) {
+	input := []string{"the", "the", "quick", "brown", "fox", "fox", "jumps", "the"}
+	expected := []string{"the", "quick", "brown", "fox", "jumps"}
+	actual := Unique(input)
+	if len(actual) != len(expected) {
+		t.Error("lengths do not match")
+		t.Fail()
+	}
+}

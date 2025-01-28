@@ -47,3 +47,15 @@ func Map[T any, U any](input []T, fn func(T) U) []U {
 	}
 	return output
 }
+
+func Unique[T comparable](arr []T) []T {
+	m := make(map[T]bool)
+	for _, v := range arr {
+		m[v] = true
+	}
+	var result []T
+	for k := range m {
+		result = append(result, k)
+	}
+	return result
+}
