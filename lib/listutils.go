@@ -1,5 +1,7 @@
 package lib
 
+import "errors"
+
 func All[T any](input []T, fn func(T) bool) bool {
 	if len(input) == 0 {
 		return true
@@ -58,4 +60,16 @@ func Unique[T comparable](arr []T) []T {
 		result = append(result, k)
 	}
 	return result
+}
+
+func Center[T comparable](arr []T) (t T, err error) {
+	length := len(arr)
+	if length == 0 {
+		err = errors.New("can't find center of an empty array")
+		return
+	}
+	if length%2 == 0 {
+		return arr[length/2-1], nil
+	}
+	return arr[length/2], nil
 }
