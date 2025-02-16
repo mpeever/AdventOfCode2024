@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func puzzle1(rules []Rule, sections []Section) (sum int) {
+func collateRules(rules []Rule, sections []Section) []Section {
 	allSections := []Section{}
 	for sectionNumber, section := range sections {
 		for _, rule := range rules {
@@ -26,6 +26,11 @@ func puzzle1(rules []Rule, sections []Section) (sum int) {
 
 	slog.Debug("added section rules", "sections", allSections)
 
+	return allSections
+}
+
+func puzzle1(rules []Rule, sections []Section) (sum int) {
+	allSections := collateRules(rules, sections)
 	correct := RemoveIfNot(allSections, func(s Section) bool {
 		return s.IsCorrect()
 	})
@@ -46,7 +51,27 @@ func puzzle1(rules []Rule, sections []Section) (sum int) {
 	return
 }
 
-func puzzle2(rules []Rule, sections [][]int) (sortedSections [][]int) {
+func puzzle2(rules []Rule, sections []Section) (sum int) {
+	allSections := collateRules(rules, sections)
+	incorrect := RemoveIf(allSections, func(s Section) bool {
+		return s.IsCorrect()
+	})
+
+	sum = 0
+	for _, section := range incorrect {
+		// We only have the incorrect Sections here
+		pages, err := section.Sort()
+		if err != nil {
+			slog.Error("error sorting section", "error", err)
+		}
+		center, err := Center(pages)
+		if err != nil {
+			slog.Error("error finding center", "error", err)
+		}
+		slog.Debug("section contains pages", "pages", pages, "center", center)
+
+		sum = sum + int(center)
+	}
 
 	return
 }
@@ -108,6 +133,8 @@ func main() {
 	slog.Debug("parsed input", "rules", rules, "sections", sections)
 
 	sum := puzzle1(rules, sections)
-	slog.Info("found puzzle1 word matches", "sum", sum)
+	slog.Info("found puzzle1 sum", "sum", sum)
 
+	sum = puzzle2(rules, sections)
+	slog.Info("found puzzle2 sum", "sum", sum)
 }
