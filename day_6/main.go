@@ -16,12 +16,16 @@ func puzzle1(p0 Point, g CharacterGrid, orientation Orientation) (sum int) {
 		Path:        []Point{p0},
 		Grid:        g,
 		Orientation: orientation,
+		Cache:       make(map[string]GuardState),
 	}
 	slog.Debug("starting with guard", "guard", guard)
 
 	guard.Grid.Update(p0, ".")
 
-	guard.WalkToEdge()
+	guard.WalkToEdge(func(state *GuardState) bool {
+		slog.Error("loop detected", "state", state)
+		return true
+	})
 	slog.Debug("finished with guard", "guard", guard)
 
 	for _, p := range guard.Path {
@@ -37,7 +41,43 @@ func puzzle1(p0 Point, g CharacterGrid, orientation Orientation) (sum int) {
 	return len(locationMap)
 }
 
-func puzzle2(p0 Point, g CharacterGrid) (sum int) {
+func puzzle2(p0 Point, g CharacterGrid, orientation Orientation) (sum int) {
+	channels := []chan bool{}
+
+	for y, row := range g.Content {
+		for x, value := range row {
+			if value != "#" {
+				clone := g.Clone()
+				point := Point{X: Width(x), Y: Height(y)}
+				clone.Update(point, "#")
+				guard := Guard{
+					Position:    p0,
+					Path:        []Point{p0},
+					Grid:        clone,
+					Orientation: orientation,
+					Cache:       make(map[string]GuardState),
+				}
+				output := make(chan bool)
+				channels = append(channels, output)
+				go func() {
+					guard.WalkToEdge(func(state *GuardState) bool {
+						output <- true
+						return false
+					})
+
+					close(output)
+				}()
+			}
+		}
+	}
+
+	for i, channel := range channels {
+		didLoop, ok := <-channel
+		if didLoop && ok {
+			slog.Debug("loop detected", "guard", i)
+			sum++
+		}
+	}
 
 	return
 }
@@ -87,6 +127,6 @@ func main() {
 	sum := puzzle1(p0, grid, orientation)
 	slog.Info("found puzzle1 sum", "sum", sum)
 
-	sum = puzzle2(p0, grid)
+	sum = puzzle2(p0, grid, orientation)
 	slog.Info("found puzzle2 sum", "sum", sum)
 }

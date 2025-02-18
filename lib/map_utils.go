@@ -48,6 +48,7 @@ type Guard struct {
 	Position    Point
 	Path        []Point
 	Icon        string
+	Cache       map[string]GuardState
 }
 
 func (gs *Guard) State() GuardState {
@@ -110,7 +111,9 @@ func (g *Guard) Move() (p Point, o Orientation, err error) {
 	return
 }
 
-func (g *Guard) WalkToEdge() {
+// WalkToEdge - keep going until you step off the map.
+// onLoopDetected will fire if we detect a loop, we then abort unless onLoopDetected returns true
+func (g *Guard) WalkToEdge(onLoopDetected func(state *GuardState) bool) {
 	var err error
 
 	posn, or, err := g.Move()
@@ -120,6 +123,17 @@ func (g *Guard) WalkToEdge() {
 	}
 
 	slog.Debug("guard has moved", "orientation", or, "current position", posn)
+	status := g.State()
+	key := status.String()
 
-	g.WalkToEdge()
+	if _, ok := g.Cache[key]; ok {
+		ok = onLoopDetected(&status)
+		if !ok {
+			return
+		}
+	}
+
+	g.Cache[key] = status
+
+	g.WalkToEdge(onLoopDetected)
 }
