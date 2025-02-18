@@ -1,6 +1,9 @@
 package lib
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func testGrid() CharacterGrid {
 	return CharacterGrid{
@@ -14,6 +17,31 @@ func testGrid() CharacterGrid {
 			{"q", "r", "s", "t", "u"},
 			{"v", "w", "x", "y", "z"},
 		},
+	}
+}
+
+func TestCharacterGrid_Clone(t *testing.T) {
+	instance := testGrid()
+	clone := instance.Clone()
+
+	for y, row := range clone.Content {
+		for x, col := range row {
+			p := Point{X: Width(x), Y: Height(y)}
+
+			// check the unaltered values match
+			v0 := instance.Char(p)
+			v1 := clone.Char(p)
+			if v0 != v1 {
+				t.Errorf("expected values to match: %v, %v", v0, v1)
+			}
+
+			// update the clone and confirm the original is unchanged
+			clone.Update(p, fmt.Sprintf("%v_%v", col, col))
+			v2 := clone.Char(p)
+			if v0 == v2 {
+				t.Errorf("expected values NOT to match: %v, %v", v0, v2)
+			}
+		}
 	}
 }
 
@@ -45,6 +73,18 @@ func TestCharacterGrid_Values(T *testing.T) {
 
 	if instance.Char(Point{X: 2, Y: 2}) != "m" {
 		T.Fail()
+	}
+}
+
+func TestCharacterGrid_Update(t *testing.T) {
+	instance := testGrid()
+
+	val := "Updated"
+	point := Point{X: 2, Y: 2}
+
+	instance.Update(point, val)
+	if instance.Char(point) != val {
+		t.Fail()
 	}
 }
 

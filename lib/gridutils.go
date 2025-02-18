@@ -113,6 +113,22 @@ func (i *Intersection) String() string {
 	return fmt.Sprintf("'%v X %v'", i.V0.String(), i.V.String())
 }
 
+func (grid *CharacterGrid) Clone() CharacterGrid {
+	cloneRows := make([][]string, len(grid.Content))
+
+	for y, row := range grid.Content {
+		cloneRow := make([]string, len(row))
+		copy(cloneRow, row)
+		cloneRows[y] = cloneRow
+	}
+
+	return CharacterGrid{
+		Min:     grid.Min,
+		Max:     grid.Max,
+		Content: cloneRows,
+	}
+}
+
 func (grid *CharacterGrid) Includes(p Point) bool {
 	if p.X >= grid.Min.X && p.X <= grid.Max.X && p.Y >= grid.Min.Y && p.Y <= grid.Max.Y {
 		slog.Debug("point is on grid", "p", p, "min", grid.Min, "max", grid.Max)
@@ -124,6 +140,10 @@ func (grid *CharacterGrid) Includes(p Point) bool {
 
 func (grid *CharacterGrid) Char(p Point) string {
 	return grid.Content[p.Y][p.X]
+}
+
+func (grid *CharacterGrid) Update(p Point, c string) {
+	grid.Content[p.Y][p.X] = c
 }
 
 func (grid *CharacterGrid) NextPoint(p0 Point, direction Direction) (p Point, err error) {
