@@ -82,7 +82,6 @@ func puzzle2(p0 Point, g CharacterGrid, orientation Orientation) (sum int) {
 	return
 }
 
-// word search, ugh
 func main() {
 	flag.BoolFunc("debug", "enable debug logging", func(s string) (err error) {
 		slog.SetLogLoggerLevel(slog.Level(slog.LevelDebug))

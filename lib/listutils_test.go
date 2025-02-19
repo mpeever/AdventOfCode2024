@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -30,7 +31,7 @@ func TestAny_WithInt64(t *testing.T) {
 
 func TestAny_WithString(t *testing.T) {
 	input := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
-	output := All(input, func(x string) bool { return x == "h" })
+	output := Any(input, func(x string) bool { return strings.EqualFold(x, "h") })
 	if !output {
 		t.Error("Expected true, got false")
 	}
