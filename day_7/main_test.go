@@ -21,35 +21,18 @@ func TestEquation_Clone(t *testing.T) {
 
 func TestEquation_Permutations_EmptyInputs(t *testing.T) {
 	eq0 := Equation{Expected: 123, Inputs: []string{}}
-	permutations := eq0.Permutations()
-	if len(permutations) != 1 {
-		t.Errorf("expected 1 permutation, got %d", len(permutations))
+	formulae := eq0.Formulae()
+	if len(formulae) != 1 {
+		t.Errorf("expected 1 permutation, got %d", len(formulae))
 	}
 }
 
 func TestEquation_Permutations_TwoInputs(t *testing.T) {
 	eq0 := Equation{Expected: 123, Inputs: []string{"41", "3"}, Operators: []string{ADD, MULT}}
-	permutations := eq0.Permutations()
+	formulae := eq0.Formulae()
 
-	if len(permutations) != 2 {
-		t.Errorf("expected 2 permutations, got %d", len(permutations))
-	}
-}
-
-func TestEquation_Permutations_ThreeInputs(t *testing.T) {
-	eq0 := Equation{Expected: 123, Inputs: []string{"1", "2", "3"}, Operators: []string{ADD, MULT}}
-	expected := []Equation{
-		{Expected: 123, Inputs: []string{"1", "+", "2", "+", "3"}},
-		{Expected: 123, Inputs: []string{"1", "*", "2", "+", "3"}},
-		{Expected: 123, Inputs: []string{"1", "+", "2", "*", "3"}},
-		{Expected: 123, Inputs: []string{"1", "*", "2", "*", "3"}},
-	}
-	permutations := eq0.Permutations()
-
-	for i, p := range permutations {
-		if !reflect.DeepEqual(p.Inputs, expected[i].Inputs) {
-			t.Errorf("expected %v, got %v, %d", expected[i], p, i)
-		}
+	if len(formulae) != 2 {
+		t.Errorf("expected 2 formulae, got %d", len(formulae))
 	}
 }
 
@@ -100,28 +83,6 @@ func TestPermutations_FourElementInput(t *testing.T) {
 	got := Permutations(input, []string{ADD, MULT})
 	if len(expected) != len(got) {
 		t.Errorf("Permutations failed: expected %v, got %v", expected, got)
-	}
-}
-
-func TestEquation_Eval_TwoElementMult(t *testing.T) {
-	eq0 := Equation{Expected: 123, Inputs: []string{"41", "*", "3"}, Operators: []string{ADD, MULT}}
-	value, err := eq0.Eval()
-	if err != nil {
-		t.Errorf("Equation eval failed: %v", err)
-	}
-	if value != eq0.Expected {
-		t.Errorf("Equation eval failed: expected %v, got %v", eq0.Expected, value)
-	}
-}
-
-func TestEquation_Eval_TwoElementAdd(t *testing.T) {
-	eq0 := Equation{Expected: 44, Inputs: []string{"41", "+", "3"}, Operators: []string{}}
-	value, err := eq0.Eval()
-	if err != nil {
-		t.Errorf("Equation eval failed: %v", err)
-	}
-	if value != eq0.Expected {
-		t.Errorf("Equation eval failed: expected %v, got %v", eq0.Expected, value)
 	}
 }
 

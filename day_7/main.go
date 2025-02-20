@@ -34,21 +34,18 @@ func (eq *Equation) Clone() Equation {
 	return Equation{cex, cin, eq.Operators}
 }
 
-func (eq *Equation) Permutations() (output []Equation) {
+func (eq *Equation) Formulae() (output [][]string) {
 	perms := permutations(eq.Inputs, eq.Operators)
 	for _, perm := range perms {
-		eqn := eq.Clone()
-		eqn.Inputs = perm
-		output = append(output, eqn)
+		output = append(output, perm)
 	}
-
 	return
 }
 
 func (eq *Equation) Verify() bool {
-	perms := eq.Permutations()
-	return Any(perms, func(eq Equation) bool {
-		value, err := Eval(eq.Inputs)
+	formulae := eq.Formulae()
+	return Any(formulae, func(f []string) bool {
+		value, err := Eval(f)
 		if err != nil {
 			return false
 		}
@@ -200,14 +197,24 @@ func puzzle1(eqns []Equation) (sum int) {
 func puzzle2(eqns []Equation) (sum int) {
 	slog.Debug("puzzle2", "eqns", eqns)
 
-	valid := RemoveIfNot(eqns, func(e Equation) bool {
-		return e.Verify()
-	})
+	channels := []chan Equation{}
 
-	slog.Debug("puzzle2", "valid", valid)
+	for _, eq := range eqns {
+		channel := make(chan Equation)
+		channels = append(channels, channel)
+		go func() {
+			if eq.Verify() {
+				channel <- eq
+			}
+			close(channel)
+		}()
+	}
 
-	for _, eq := range valid {
-		sum += eq.Expected
+	for _, channel := range channels {
+		eq, ok := <-channel
+		if ok {
+			sum += eq.Expected
+		}
 	}
 
 	return
