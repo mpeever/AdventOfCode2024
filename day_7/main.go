@@ -181,14 +181,24 @@ func permutations(str []string, operators []string) (output [][]string) {
 func puzzle1(eqns []Equation) (sum int) {
 	slog.Debug("puzzle1", "eqns", eqns)
 
-	valid := RemoveIfNot(eqns, func(e Equation) bool {
-		return e.Verify()
-	})
+	channels := []chan Equation{}
 
-	slog.Debug("puzzle1", "valid", valid)
+	for _, eq := range eqns {
+		channel := make(chan Equation)
+		channels = append(channels, channel)
+		go func() {
+			if eq.Verify() {
+				channel <- eq
+			}
+			close(channel)
+		}()
+	}
 
-	for _, eq := range valid {
-		sum += eq.Expected
+	for _, channel := range channels {
+		eq, ok := <-channel
+		if ok {
+			sum += eq.Expected
+		}
 	}
 
 	return
