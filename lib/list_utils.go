@@ -10,7 +10,7 @@ func All[T any](input []T, fn func(T) bool) bool {
 		return false
 	}
 
-	return All(input[1:], fn)
+	return All[T](input[1:], fn)
 }
 
 func Any[T any](input []T, fn func(T) bool) bool {
@@ -21,7 +21,7 @@ func Any[T any](input []T, fn func(T) bool) bool {
 		return true
 	}
 
-	return Any(input[1:], fn)
+	return Any[T](input[1:], fn)
 }
 
 func RemoveIf[T any](input []T, fn func(T) bool) (output []T) {

@@ -59,6 +59,18 @@ func (eq *Equation) Verify() bool {
 func Eval(str []string) (val int, err error) {
 	stack := NewStack[string]()
 
+	// simple dispatch table
+	dt := make(map[string]func(a, b int) int)
+	dt[ADD] = func(a, b int) int { return a + b }
+	dt[MULT] = func(a, b int) int { return a * b }
+	dt[CAT] = func(a, b int) int {
+		astr := strconv.Itoa(a)
+		bstr := strconv.Itoa(b)
+		ostr := strings.Join([]string{astr, bstr}, "")
+		o, _ := strconv.Atoi(ostr)
+		return o
+	}
+
 	re := regexp.MustCompile(`\d+`)
 	for _, el := range str {
 		// just push operators onto the stack
@@ -76,7 +88,9 @@ func Eval(str []string) (val int, err error) {
 				continue
 			}
 
-			if last == ADD {
+			if last == ADD || last == MULT || last == CAT {
+				fn := dt[last]
+
 				// get the operator off the stack
 				stack.Pop()
 
@@ -98,47 +112,9 @@ func Eval(str []string) (val int, err error) {
 					return
 				}
 
-				stack.Push(strconv.Itoa(i + j))
-				continue
-			}
+				value := fn(i, j)
 
-			if last == MULT {
-				// get the operator off the stack
-				stack.Pop()
-
-				a, ok := stack.Pop()
-				if !ok {
-					err = errors.New("empty stack")
-					return
-				}
-
-				i, e := strconv.Atoi(a)
-				if e != nil {
-					err = e
-					return
-				}
-
-				j, e := strconv.Atoi(el)
-				if e != nil {
-					err = e
-					return
-				}
-
-				stack.Push(strconv.Itoa(i * j))
-				continue
-			}
-
-			if last == CAT {
-				stack.Pop()
-
-				prefix, ok := stack.Pop()
-				if !ok {
-					// this is a real error
-					err = errors.New("empty stack")
-					return
-				}
-				cat := strings.Join([]string{prefix, el}, "")
-				stack.Push(cat)
+				stack.Push(strconv.Itoa(value))
 				continue
 			}
 			// the last element in the stack isn't CAT, just push el and continue
