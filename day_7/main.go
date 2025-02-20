@@ -3,6 +3,7 @@ package main
 import (
 	. "AdventOfCode2024/lib"
 	"bufio"
+	"errors"
 	"flag"
 	"log/slog"
 	"os"
@@ -12,52 +13,29 @@ import (
 	"strings"
 )
 
+const (
+	ADD  = "+"
+	MULT = "*"
+	CAT  = "||"
+)
+
 type Equation struct {
-	Expected int
-	Inputs   []string
+	Expected  int
+	Inputs    []string
+	Operators []string
 }
 
 func (eq *Equation) Clone() Equation {
 	cex := eq.Expected
+
 	cin := make([]string, len(eq.Inputs))
 	copy(cin, eq.Inputs)
-	return Equation{cex, cin}
-}
 
-func (eq *Equation) Eval() (val int, err error) {
-	var operator string
-	var i int
-
-	for _, input := range eq.Inputs {
-
-		if input == "+" || input == "*" {
-			operator = input
-			continue
-		}
-
-		i, err = strconv.Atoi(input)
-		if err != nil {
-			return
-		}
-
-		if val == 0 {
-			val = i
-			continue
-		}
-
-		if operator == "+" {
-			val = i + val
-			continue
-		}
-
-		val = i * val
-	}
-
-	return
+	return Equation{cex, cin, eq.Operators}
 }
 
 func (eq *Equation) Permutations() (output []Equation) {
-	perms := permutations(eq.Inputs)
+	perms := permutations(eq.Inputs, eq.Operators)
 	for _, perm := range perms {
 		eqn := eq.Clone()
 		eqn.Inputs = perm
@@ -70,7 +48,7 @@ func (eq *Equation) Permutations() (output []Equation) {
 func (eq *Equation) Verify() bool {
 	perms := eq.Permutations()
 	return Any(perms, func(eq Equation) bool {
-		value, err := eq.Eval()
+		value, err := Eval(eq.Inputs)
 		if err != nil {
 			return false
 		}
@@ -78,12 +56,112 @@ func (eq *Equation) Verify() bool {
 	})
 }
 
-func Permutations(input []string) (output [][]string) {
+func Eval(str []string) (val int, err error) {
+	stack := NewStack[string]()
+
+	re := regexp.MustCompile(`\d+`)
+	for _, el := range str {
+		// just push operators onto the stack
+		if el == ADD || el == MULT || el == CAT {
+			stack.Push(el)
+			continue
+		}
+
+		if re.MatchString(el) {
+			// this is a number, we need to check what our last operator was
+			last, ok := stack.Peek()
+			if !ok {
+				// empty stack, we can just push this onto it and go on
+				stack.Push(el)
+				continue
+			}
+
+			if last == ADD {
+				// get the operator off the stack
+				stack.Pop()
+
+				a, ok := stack.Pop()
+				if !ok {
+					err = errors.New("empty stack")
+					return
+				}
+
+				i, e := strconv.Atoi(a)
+				if e != nil {
+					err = e
+					return
+				}
+
+				j, e := strconv.Atoi(el)
+				if e != nil {
+					err = e
+					return
+				}
+
+				stack.Push(strconv.Itoa(i + j))
+				continue
+			}
+
+			if last == MULT {
+				// get the operator off the stack
+				stack.Pop()
+
+				a, ok := stack.Pop()
+				if !ok {
+					err = errors.New("empty stack")
+					return
+				}
+
+				i, e := strconv.Atoi(a)
+				if e != nil {
+					err = e
+					return
+				}
+
+				j, e := strconv.Atoi(el)
+				if e != nil {
+					err = e
+					return
+				}
+
+				stack.Push(strconv.Itoa(i * j))
+				continue
+			}
+
+			if last == CAT {
+				stack.Pop()
+
+				prefix, ok := stack.Pop()
+				if !ok {
+					// this is a real error
+					err = errors.New("empty stack")
+					return
+				}
+				cat := strings.Join([]string{prefix, el}, "")
+				stack.Push(cat)
+				continue
+			}
+			// the last element in the stack isn't CAT, just push el and continue
+			//stack.Push(el)
+		}
+	}
+	s, ok := stack.Pop()
+	if !ok {
+		err = errors.New("empty stack")
+		return
+	}
+
+	val, err = strconv.Atoi(s)
+
+	return
+}
+
+func Permutations(input []string, operators []string) (output [][]string) {
 	buffer := make([]string, len(input))
 	copy(buffer, input)
 	slices.Reverse(buffer)
 
-	perms := permutations(buffer)
+	perms := permutations(buffer, operators)
 	for _, perm := range perms {
 		p := make([]string, len(perm))
 		copy(p, perm)
@@ -94,14 +172,14 @@ func Permutations(input []string) (output [][]string) {
 	return
 }
 
-func permutations(str []string) (output [][]string) {
-	if len(str) == 0 {
+func permutations(str []string, operators []string) (output [][]string) {
+	if len(str) == 0 || len(str) == 1 {
 		output = append(output, str)
 		return
 	}
 
 	if len(str) == 2 {
-		for _, operation := range []string{"+", "*"} {
+		for _, operation := range operators {
 			perm := make([]string, len(str)+1)
 			perm[0] = str[0]
 			perm[1] = operation
@@ -114,9 +192,9 @@ func permutations(str []string) (output [][]string) {
 	slog.Debug("permutations", "len(str)", len(str))
 
 	if len(str) > 2 {
-		partials := permutations(str[1:])
+		partials := permutations(str[1:], operators)
 		for _, partial := range partials {
-			for _, operation := range []string{"+", "*"} {
+			for _, operation := range operators {
 				perm := []string{str[0], operation}
 				perm = append(perm, partial...)
 				output = append(output, perm)
@@ -128,6 +206,8 @@ func permutations(str []string) (output [][]string) {
 }
 
 func puzzle1(eqns []Equation) (sum int) {
+	slog.Debug("puzzle1", "eqns", eqns)
+
 	valid := RemoveIfNot(eqns, func(e Equation) bool {
 		return e.Verify()
 	})
@@ -142,6 +222,17 @@ func puzzle1(eqns []Equation) (sum int) {
 }
 
 func puzzle2(eqns []Equation) (sum int) {
+	slog.Debug("puzzle2", "eqns", eqns)
+
+	valid := RemoveIfNot(eqns, func(e Equation) bool {
+		return e.Verify()
+	})
+
+	slog.Debug("puzzle2", "valid", valid)
+
+	for _, eq := range valid {
+		sum += eq.Expected
+	}
 
 	return
 }
@@ -185,9 +276,19 @@ func main() {
 
 	slog.Debug("found equations", "equation count", len(equations))
 
-	sum := puzzle1(equations)
+	p1Equations := Map(equations, func(e Equation) Equation {
+		e.Operators = []string{ADD, MULT}
+		return e
+	})
+
+	sum := puzzle1(p1Equations)
 	slog.Info("found puzzle1 sum", "sum", sum)
 
-	sum = puzzle2(equations)
+	p2Equations := Map(equations, func(e Equation) Equation {
+		e.Operators = []string{ADD, MULT, CAT}
+		return e
+	})
+
+	sum = puzzle2(p2Equations)
 	slog.Info("found puzzle2 sum", "sum", sum)
 }
