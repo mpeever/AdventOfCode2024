@@ -1,12 +1,13 @@
 package main
 
 import (
-	//. "AdventOfCode2024/lib"
+	. "AdventOfCode2024/lib"
 	"bufio"
 	"flag"
 	"log/slog"
 	"os"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -23,30 +24,119 @@ func (eq *Equation) Clone() Equation {
 	return Equation{cex, cin}
 }
 
+func (eq *Equation) Eval() (val int, err error) {
+	var operator string
+	var i int
+
+	for _, input := range eq.Inputs {
+
+		if input == "+" || input == "*" {
+			operator = input
+			continue
+		}
+
+		i, err = strconv.Atoi(input)
+		if err != nil {
+			return
+		}
+
+		if val == 0 {
+			val = i
+			continue
+		}
+
+		if operator == "+" {
+			val = i + val
+			continue
+		}
+
+		val = i * val
+	}
+
+	return
+}
+
 func (eq *Equation) Permutations() (output []Equation) {
-	if len(eq.Inputs) == 0 {
-		output = append(output, eq.Clone())
+	perms := permutations(eq.Inputs)
+	for _, perm := range perms {
+		eqn := eq.Clone()
+		eqn.Inputs = perm
+		output = append(output, eqn)
+	}
+
+	return
+}
+
+func (eq *Equation) Verify() bool {
+	perms := eq.Permutations()
+	return Any(perms, func(eq Equation) bool {
+		value, err := eq.Eval()
+		if err != nil {
+			return false
+		}
+		return value == eq.Expected
+	})
+}
+
+func Permutations(input []string) (output [][]string) {
+	buffer := make([]string, len(input))
+	copy(buffer, input)
+	slices.Reverse(buffer)
+
+	perms := permutations(buffer)
+	for _, perm := range perms {
+		p := make([]string, len(perm))
+		copy(p, perm)
+		slices.Reverse(p)
+		output = append(output, p)
+	}
+
+	return
+}
+
+func permutations(str []string) (output [][]string) {
+	if len(str) == 0 {
+		output = append(output, str)
 		return
 	}
 
-	if len(eq.Inputs) == 2 {
+	if len(str) == 2 {
 		for _, operation := range []string{"+", "*"} {
-			eq1 := eq.Clone()
-			inputs := make([]string, len(eq.Inputs)+1)
-			inputs[0] = eq1.Inputs[0]
-			inputs[1] = operation
-			inputs[2] = eq1.Inputs[1]
-			eq1.Inputs = inputs
-
-			output = append(output, eq1)
+			perm := make([]string, len(str)+1)
+			perm[0] = str[0]
+			perm[1] = operation
+			perm[2] = str[1]
+			output = append(output, perm)
 		}
 		return
+	}
+
+	slog.Debug("permutations", "len(str)", len(str))
+
+	if len(str) > 2 {
+		partials := permutations(str[1:])
+		for _, partial := range partials {
+			for _, operation := range []string{"+", "*"} {
+				perm := []string{str[0], operation}
+				perm = append(perm, partial...)
+				output = append(output, perm)
+			}
+		}
 	}
 
 	return
 }
 
 func puzzle1(eqns []Equation) (sum int) {
+	valid := RemoveIfNot(eqns, func(e Equation) bool {
+		return e.Verify()
+	})
+
+	slog.Debug("puzzle1", "valid", valid)
+
+	for _, eq := range valid {
+		sum += eq.Expected
+	}
 
 	return
 }
