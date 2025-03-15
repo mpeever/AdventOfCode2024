@@ -88,3 +88,19 @@ func TestUnique_WithString(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestPairs(t *testing.T) {
+	input := []string{"a", "b", "c", "d", "e"}
+	expected := [][]string{
+		{"a", "b"}, {"a", "c"}, {"a", "d"}, {"a", "e"},
+		{"b", "a"}, {"b", "c"}, {"b", "d"}, {"b", "e"},
+		{"c", "a"}, {"c", "b"}, {"c", "d"}, {"c", "e"},
+		{"d", "a"}, {"d", "b"}, {"d", "c"}, {"d", "e"},
+		{"e", "a"}, {"e", "b"}, {"e", "c"}, {"e", "d"},
+	}
+	actual := Pairs(input)
+	if len(actual) != len(expected) {
+		t.Error("lengths do not match")
+		t.Fail()
+	}
+}

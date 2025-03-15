@@ -73,3 +73,16 @@ func Center[T comparable](arr []T) (t T, err error) {
 	}
 	return arr[length/2], nil
 }
+
+func Pairs[T comparable](arr []T) [][]T {
+	pairs := [][]T{}
+	for i, t0 := range arr {
+		for j, t1 := range arr {
+			if i == j {
+				continue
+			}
+			pairs = append(pairs, []T{t0, t1})
+		}
+	}
+	return pairs
+}

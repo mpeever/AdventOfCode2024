@@ -2,6 +2,8 @@ package lib
 
 import (
 	"fmt"
+	"math"
+	"reflect"
 	"testing"
 )
 
@@ -337,5 +339,83 @@ func TestCharacterGrid_Diagonals(t *testing.T) {
 		}) {
 			t.Fail()
 		}
+	}
+}
+
+func TestCharacterGrid_VectorToEdge(t *testing.T) {
+	grid := testGrid()
+	p0 := Point{X: 1, Y: 1} // "g"
+	v := grid.VectorToEdge(p0, DOWNRIGHT)
+	expected := Vector{
+		Grid:   &grid,
+		Points: []Point{{X: 1, Y: 1}, {X: 2, Y: 2}, {X: 3, Y: 3}, {X: 4, Y: 4}},
+	}
+	if !reflect.DeepEqual(expected, v) {
+		t.Errorf("expected: %v, got: %v", expected, v)
+	}
+}
+
+func TestCharacterGrid_FloatDistance(t *testing.T) {
+	grid := testGrid()
+	p0 := Point{X: 1, Y: 1}
+	p1 := Point{X: 2, Y: 2}
+	d, err := grid.FloatDistance(p0, p1)
+	if err != nil || d != Distance(math.Sqrt(2.0)) {
+		t.Errorf("expected: %v, got: %v", 1.414, d)
+	}
+}
+
+func TestCharacterGrid_Line(t *testing.T) {
+	grid := testGrid()
+	p0 := Point{X: 0, Y: 0}
+	p1 := Point{X: 1, Y: 2}
+	line := grid.Line(p0, p1)
+
+	expectedPoints := []Point{{X: 0, Y: 0}, {X: 1, Y: 2}, {X: 2, Y: 4}}
+	expected := Line{
+		Grid:   &grid,
+		Points: NewSet(expectedPoints),
+	}
+
+	if !reflect.DeepEqual(line, expected) {
+		t.Errorf("expected %v, got %v", expected, line)
+		t.Fail()
+	}
+}
+
+func TestSlope_Reduce_WhenXgtY(t *testing.T) {
+	slope := Slope{X: 4, Y: 2}
+	r := slope.Reduce()
+	if !reflect.DeepEqual(r, Slope{X: 2, Y: 1}) {
+		t.Fail()
+	}
+}
+
+func TestSlope_Reduce_WhenXltY(t *testing.T) {
+	slope := Slope{X: 4, Y: 12}
+	r := slope.Reduce()
+	if !reflect.DeepEqual(r, Slope{X: 1, Y: 3}) {
+		t.Fail()
+	}
+}
+
+func TestSlope_Reduce_WithPoints_Negative(t *testing.T) {
+	p0 := Point{X: 2, Y: 2}
+	p1 := Point{X: 1, Y: 6}
+	m := NewSlope(p0, p1)
+	if !reflect.DeepEqual(m, Slope{X: -1, Y: 4}) && !reflect.DeepEqual(m, Slope{X: 1, Y: -4}) {
+		// Negative sign should be on the Y here, but could end up on either
+		t.Errorf("expected: %v, got: %v", Slope{X: 1, Y: -4}, m)
+		t.Fail()
+	}
+}
+
+func TestSlope_Reduce_WithPoints_Positive(t *testing.T) {
+	p0 := Point{X: 1, Y: 1}
+	p1 := Point{X: 2, Y: 4}
+	m := NewSlope(p0, p1)
+	if !reflect.DeepEqual(m, Slope{X: 1, Y: 3}) {
+		t.Errorf("expected: %v, got: %v", Slope{X: 1, Y: 3}, m)
+		t.Fail()
 	}
 }

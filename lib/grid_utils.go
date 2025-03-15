@@ -22,11 +22,22 @@ const ( // This is complicated, because we're not in the first quadrant
 	DOWNRIGHT
 )
 
+func AllDirections() []Direction {
+	return []Direction{UP, UPRIGHT, RIGHT, DOWNRIGHT, DOWN, DOWNLEFT, LEFT, UPLEFT}
+}
+
 type Size int
 type Width int
 type Height int
 
+type Distance float64
+
 type Point struct {
+	X Width
+	Y Height
+}
+
+type Slope struct {
 	X Width
 	Y Height
 }
@@ -38,6 +49,11 @@ type CharacterGrid struct {
 
 type Vector struct {
 	Points []Point
+	Grid   *CharacterGrid
+}
+
+type Line struct {
+	Points Set[Point]
 	Grid   *CharacterGrid
 }
 
@@ -177,6 +193,14 @@ func (grid *CharacterGrid) Distance(p0, p1 Point) (s Size, err error) {
 	dy := int(math.Abs(float64(p0.Y - p1.Y)))
 	l := math.Hypot(float64(dx), float64(dy))
 	s = Size(math.Floor(l))
+	return
+}
+
+func (grid *CharacterGrid) FloatDistance(p0, p1 Point) (s Distance, err error) {
+	dx := int(math.Abs(float64(p0.X - p1.X)))
+	dy := int(math.Abs(float64(p0.Y - p1.Y)))
+	l := math.Hypot(float64(dx), float64(dy))
+	s = Distance(l)
 	return
 }
 
@@ -347,13 +371,14 @@ func (grid *CharacterGrid) PrettyPrint(debug bool) {
 		line := []string{}
 		for x, c := range l {
 			if debug {
-				line = append(line, fmt.Sprintf("%s (%d, %d)", c, x, y))
+				line = append(line, fmt.Sprintf("%3s (%d, %d)", c, x, y))
 			} else {
-				line = append(line, fmt.Sprintf("%s", c))
+				line = append(line, fmt.Sprintf("%3s", c))
 			}
 		}
-		println("\t", strings.Join(line, " "))
+		println("\n\t", strings.Join(line, " "))
 	}
+	println("\n")
 }
 
 func (grid *CharacterGrid) PrettyPrintPoints(points []Point, debug bool) {
@@ -400,4 +425,92 @@ func Intersections(vs []Vector) (inxs []Intersection) {
 		}
 	}
 	return
+}
+
+func (grid *CharacterGrid) vectorToEdge(p0 Point, d Direction, v0 *Vector) Vector {
+	if !grid.Includes(p0) {
+		// default action: if p0 isn't on the grid, return our accumulator
+		return *v0
+	}
+
+	v0.Points = append(v0.Points, p0)
+
+	p, err := grid.NextPoint(p0, d)
+	if err != nil {
+		// we probably walked off the edge here, return our accumulator
+		return *v0
+	}
+
+	return grid.vectorToEdge(p, d, v0)
+}
+
+func (grid *CharacterGrid) VectorToEdge(p0 Point, d Direction) Vector {
+	v0 := Vector{
+		Points: []Point{},
+		Grid:   grid,
+	}
+	return grid.vectorToEdge(p0, d, &v0)
+}
+
+func (grid *CharacterGrid) AllPoints() []Point {
+	var points []Point
+	for y, row := range grid.Content {
+		for x, _ := range row {
+			points = append(points, Point{X: Width(x), Y: Height(y)})
+		}
+	}
+	return points
+}
+
+func NewSlope(p0, p1 Point) Slope {
+	s := Slope{X: p1.X - p0.X, Y: p1.Y - p0.Y}
+	return s.Reduce()
+}
+
+func (slope *Slope) Float() float64 {
+	return float64(slope.Y) / float64(slope.X)
+}
+
+func (s *Slope) Reduce() Slope {
+	if int(s.X)%int(s.Y) == 0 { // X > Y
+		return Slope{X: Width(int(s.X) / int(s.Y)), Y: 1}
+	}
+
+	if int(s.Y)%int(s.X) == 0 { // Y > X
+		return Slope{X: 1, Y: Height(int(s.Y) / int(s.X))}
+	}
+
+	return Slope{X: s.X, Y: s.Y}
+}
+
+func (grid *CharacterGrid) Step(p Point, m Slope) (point Point, err error) {
+	point = Point{X: p.X + m.X, Y: p.Y + m.Y}
+	if !grid.Includes(point) {
+		err = errors.New(fmt.Sprintf("invalid point: %v", point))
+		return
+	}
+	return
+}
+
+func (grid *CharacterGrid) Line(p0, p Point) Line {
+	slope := NewSlope(p0, p)
+	m := slope.Float()
+
+	// y = mx + b ; b = y - mx
+	b := p0.Y - Height(m*float64(p0.X))
+
+	points := RemoveIfNot[Point](grid.AllPoints(), func(p Point) bool {
+		return p.Y == Height(m*float64(p.X))+b
+	})
+
+	return Line{
+		Points: NewSet[Point](points),
+		Grid:   grid,
+	}
+}
+
+func (line *Line) Contains(p []Point) []Point {
+	return RemoveIfNot[Point](p, func(p Point) bool {
+		return line.Points.Contains(p)
+	})
 }
