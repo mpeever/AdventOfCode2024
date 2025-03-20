@@ -121,9 +121,7 @@ func puzzle2(g CharacterGrid) int {
 			line := grid.Line(pair[0], pair[1])
 			slog.Debug("line through", "line", line, "points", pair)
 
-			for _, p := range line.Points.Values() {
-				allAntiNodes.Add(p)
-			}
+			allAntiNodes.Merge(line.Points)
 		}
 	}
 

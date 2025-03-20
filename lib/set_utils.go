@@ -19,6 +19,16 @@ func NewSet[T any](data []T) Set[T] {
 	}
 }
 
+func (s *Set[T]) AddAll(data []T) {
+	for _, v := range data {
+		s.Add(v)
+	}
+}
+
+func (s *Set[T]) Merge(data Set[T]) {
+	s.AddAll(data.Values())
+}
+
 func (s *Set[T]) MakeKey(value T) string {
 	return fmt.Sprintf("%v", value)
 }
