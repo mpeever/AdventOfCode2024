@@ -492,12 +492,12 @@ func (grid *CharacterGrid) Step(p Point, m Slope) (point Point, err error) {
 	return
 }
 
-func (grid *CharacterGrid) Line(p0, p Point) Line {
-	slope := NewSlope(p0, p)
+func (grid *CharacterGrid) Line(p0, p1 Point) Line {
+	slope := NewSlope(p0, p1)
 	m := slope.Float()
 
 	// y = mx + b ; b = y - mx
-	b := p0.Y - Height(m*float64(p0.X))
+	b := p1.Y - Height(m*float64(p1.X))
 
 	points := NewSet[Point]([]Point{})
 	for _, p := range grid.AllPoints() {
