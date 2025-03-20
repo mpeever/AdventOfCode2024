@@ -46,17 +46,17 @@ func Demux(g CharacterGrid) (output map[string]CharacterGrid) {
 }
 
 type Antinode struct {
-	Grid       CharacterGrid
+	grid       CharacterGrid
 	Char       string
 	P0, P1, P2 Point
 }
 
 func (a *Antinode) Valid() bool {
-	d0, err := a.Grid.FloatDistance(a.P0, a.P1)
+	d0, err := a.grid.FloatDistance(a.P0, a.P1)
 	if err != nil {
 		return false
 	}
-	d1, err := a.Grid.FloatDistance(a.P0, a.P2)
+	d1, err := a.grid.FloatDistance(a.P0, a.P2)
 	if err != nil {
 		return false
 	}
@@ -65,17 +65,17 @@ func (a *Antinode) Valid() bool {
 	return float64(d0) == float64(d1)/2
 }
 
-func puzzle1(g CharacterGrid) (sum int) {
+func puzzle1(g CharacterGrid) int {
 	allAntiNodes := NewSet[Point]([]Point{})
 
 	for char, grid := range Demux(g) {
-		allNodes := RemoveIfNot[Point](grid.AllPoints(), func(p Point) bool {
+		antennaNodes := RemoveIfNot[Point](grid.AllPoints(), func(p Point) bool {
 			return grid.Char(p) == char
 		})
 
-		slog.Debug("all nodes", "len", len(allNodes))
+		slog.Debug("all nodes", "len", len(antennaNodes))
 
-		pairs := Pairs[Point](allNodes)
+		pairs := Pairs[Point](antennaNodes)
 		for _, pair := range pairs {
 			// get the line thru the pair of points
 			line := grid.Line(pair[0], pair[1])
@@ -83,7 +83,7 @@ func puzzle1(g CharacterGrid) (sum int) {
 
 			for _, p := range line.Points.Values() {
 				an := Antinode{
-					Grid: grid,
+					grid: grid,
 					Char: char,
 					P1:   pair[0],
 					P2:   pair[1],
@@ -104,9 +104,34 @@ func puzzle1(g CharacterGrid) (sum int) {
 	return allAntiNodes.Size()
 }
 
-func puzzle2(g CharacterGrid) (sum int) {
+func puzzle2(g CharacterGrid) int {
+	allAntiNodes := NewSet[Point]([]Point{})
 
-	return
+	for char, grid := range Demux(g) {
+		antennaNodes := RemoveIfNot[Point](grid.AllPoints(), func(p Point) bool {
+			return grid.Char(p) == char
+		})
+
+		slog.Debug("all nodes", "len", len(antennaNodes))
+
+		pairs := Pairs[Point](antennaNodes)
+
+		for _, pair := range pairs {
+			// get the line thru the pair of points
+			line := grid.Line(pair[0], pair[1])
+			slog.Debug("line through", "line", line, "points", pair)
+
+			for _, p := range line.Points.Values() {
+				allAntiNodes.Add(p)
+			}
+		}
+	}
+
+	slog.Debug("all Antinodes", "antinodes", allAntiNodes.Values())
+
+	slog.Info("puzzle 2 found Antinodes", "count", allAntiNodes.Size())
+
+	return allAntiNodes.Size()
 }
 
 func main() {
