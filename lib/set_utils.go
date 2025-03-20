@@ -9,6 +9,7 @@ type Set[T any] struct {
 func NewSet[T any](data []T) Set[T] {
 	d := make(map[string]T, len(data))
 	for _, v := range data {
+		// this is TOTALLY cheating
 		key := fmt.Sprintf("%v", v)
 		d[key] = v
 	}
@@ -18,12 +19,16 @@ func NewSet[T any](data []T) Set[T] {
 	}
 }
 
+func (s *Set[T]) MakeKey(value T) string {
+	return fmt.Sprintf("%v", value)
+}
+
 func (s *Set[T]) Size() int {
 	return len(s.data)
 }
 
 func (s *Set[T]) Add(value T) int {
-	key := fmt.Sprintf("%v", value)
+	key := s.MakeKey(value)
 	// we might be able to skip this and just trust the map
 	_, ok := s.data[key]
 	if !ok {
@@ -33,7 +38,7 @@ func (s *Set[T]) Add(value T) int {
 }
 
 func (s *Set[T]) Remove(value T) int {
-	key := fmt.Sprintf("%v", value)
+	key := s.MakeKey(value)
 	_, ok := s.data[key]
 	if !ok {
 		return len(s.data)
@@ -45,7 +50,7 @@ func (s *Set[T]) Remove(value T) int {
 }
 
 func (s *Set[T]) Contains(value T) bool {
-	_, ok := s.data[fmt.Sprintf("%v", value)]
+	_, ok := s.data[s.MakeKey(value)]
 	return ok
 }
 
