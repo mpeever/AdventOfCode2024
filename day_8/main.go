@@ -111,8 +111,7 @@ func puzzle2(g CharacterGrid) int {
 		antennaNodes := RemoveIfNot[Point](grid.AllPoints(), func(p Point) bool {
 			return grid.Char(p) == char
 		})
-
-		slog.Debug("all nodes", "len", len(antennaNodes))
+		slog.Debug("all nodes", "len", len(antennaNodes), "nodes", antennaNodes)
 
 		pairs := Pairs[Point](antennaNodes)
 

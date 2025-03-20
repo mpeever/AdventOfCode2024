@@ -499,12 +499,15 @@ func (grid *CharacterGrid) Line(p0, p Point) Line {
 	// y = mx + b ; b = y - mx
 	b := p0.Y - Height(m*float64(p0.X))
 
-	points := RemoveIfNot[Point](grid.AllPoints(), func(p Point) bool {
-		return p.Y == Height(m*float64(p.X))+b
-	})
+	points := NewSet[Point]([]Point{})
+	for _, p := range grid.AllPoints() {
+		if p.Y == Height(m*float64(p.X))+b {
+			points.Add(p)
+		}
+	}
 
 	return Line{
-		Points: NewSet[Point](points),
+		Points: points,
 		Grid:   grid,
 	}
 }
