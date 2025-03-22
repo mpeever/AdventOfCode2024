@@ -493,15 +493,20 @@ func (grid *CharacterGrid) Step(p Point, m Slope) (point Point, err error) {
 }
 
 func (grid *CharacterGrid) Line(p0, p1 Point) Line {
-	slope := NewSlope(p0, p1)
-	m := slope.Float()
+	//slope := NewSlope(p0, p1)
+	//m := slope.Float()
+	m := float64(p1.Y-p0.Y) / float64(p1.X-p0.X)
 
 	// y = mx + b ; b = y - mx
-	b := p1.Y - Height(m*float64(p1.X))
+	//b := p1.Y - Height(m*float64(p1.X))
+	b := float64(p0.Y) - float64(p0.X)*m
 
 	points := NewSet[Point]([]Point{})
 	for _, p := range grid.AllPoints() {
-		if p.Y == Height(m*float64(p.X))+b {
+		//if p.Y == Height(m*float64(p.X))+Height(b) {
+		//	points.Add(p)
+		//}
+		if math.Abs(float64(p.Y)-m*float64(p.X)-b) < 1.0e-5 {
 			points.Add(p)
 		}
 	}
