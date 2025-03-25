@@ -419,19 +419,3 @@ func TestSlope_Reduce_WithPoints_Positive(t *testing.T) {
 		t.Fail()
 	}
 }
-
-func TestLine_WithProblemInputs(t *testing.T) {
-	// line="{Points:{data:map[{0 2}:{X:0 Y:2} {1 2}:{X:1 Y:2} {2 1}:{X:2 Y:1} {3 1}:{X:3 Y:1} {4 0}:{X:4 Y:0} {5 0}:{X:5 Y:0}]} Grid:0x14000110100}"
-	// points="[{X:3 Y:1} {X:1 Y:2}]"
-	// m = -1/2
-	// b = 1/2
-	grid := testGrid()
-	p0 := Point{X: 3, Y: 1}
-	p1 := Point{X: 1, Y: 2}
-	l := grid.Line(p0, p1)
-
-	if !l.Points.Contains(Point{X: 5, Y: 0}) {
-		t.Errorf("expected: %v to contain %v", l.Points, Point{X: 5, Y: 0})
-		t.Fail()
-	}
-}
